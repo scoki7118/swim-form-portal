@@ -1,0 +1,46 @@
+# user_portal.py
+import streamlit as st
+from datetime import datetime
+import importlib
+from ui_settings import ui_settings_panel
+
+PAGES = {
+    "💤 お休み連絡": "user_pages.absent",
+    "🔁 振替申込": "user_pages.transfer",
+    "🔧 コース変更": "user_pages.course_change",
+    "💬 担当者へ連絡": "user_pages.contact",
+}
+
+def main():
+    st.set_page_config(page_title="ユーザーポータル", layout="wide", initial_sidebar_state="collapsed")
+    ui_settings_panel()  # ユーザー側にも見やすさ設定を適用
+    st.title("💬 ユーザーポータル")
+    st.caption(f"最終更新: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+
+    st.markdown("#### 操作を選択してください")
+    # 大きめボタンの横並び
+    cols = st.columns(len(PAGES))
+    keys = list(PAGES.keys())
+    for col, label in zip(cols, keys):
+        with col:
+            if st.button(label, use_container_width=True):
+                st.session_state["user_page"] = label
+
+    st.divider()
+
+    # 現在のページ
+    current = st.session_state.get("user_page", keys[0])
+    st.markdown(f"### {current}")
+
+    # 動的読み込みして render() 実行
+    try:
+        mod = importlib.import_module(PAGES[current])
+        if hasattr(mod, "render"):
+            mod.render()
+        else:
+            st.error("render() が定義されていません。")
+    except Exception as e:
+        st.error(f"ページ読み込みエラー: {e}")
+
+if __name__ == "__main__":
+    main()
